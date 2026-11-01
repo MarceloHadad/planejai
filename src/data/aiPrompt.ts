@@ -1,3 +1,4 @@
+import type { InsightData } from '@/services/aiService'
 import { parseCurrency } from '@/utils/currency'
 import { calcMonthlySavings } from '@/utils/simulation'
 
@@ -25,7 +26,7 @@ const RESPONSE_SCHEMA = `{
   }
 }`
 
-export function buildAIPrompt(simulation: SimulationRecord) {
+function buildSimulationData(simulation: SimulationRecord) {
   const { income, expenses, debts, goalName, goalAmount, goalDeadline } =
     simulation
 
@@ -33,13 +34,7 @@ export function buildAIPrompt(simulation: SimulationRecord) {
   const monthlySavingsNeeded =
     parseCurrency(goalAmount) / parseInt(goalDeadline)
 
-  return `Você é um educador financeiro especializado em finanças pessoais. 
-    Analise os dados abaixo e gere um diagnóstico financeiro personalizado com linguagem clara, didática e encorajadora, 
-    voltado para pessoas sem conhecimento financeiro. O diagnóstico será exibido diretamente ao usuário no app, 
-    fale sempre em segunda pessoa ("você tem...", "sua meta...").
-
-    Dados da simulação:
-    - Renda mensal bruta: ${income}
+  return `- Renda mensal bruta: ${income}
     - Custos fixos essenciais: ${expenses}
     - Dívidas e parcelas mensais: ${debts}
     - Valor disponível por mês: ${monthlySavings} reais
@@ -47,7 +42,17 @@ export function buildAIPrompt(simulation: SimulationRecord) {
     - Custo da meta: ${goalAmount}
     - Prazo desejado: ${goalDeadline} meses
     - Economia mensal necessária para atingir a meta no prazo: ${monthlySavingsNeeded} reais
-    - Saldo após reserva para a meta: ${monthlySavings - monthlySavingsNeeded} reais
+    - Saldo após reserva para a meta: ${monthlySavings - monthlySavingsNeeded} reais`
+}
+
+export function buildAIPrompt(simulation: SimulationRecord) {
+  return `Você é um educador financeiro especializado em finanças pessoais. 
+    Analise os dados abaixo e gere um diagnóstico financeiro personalizado com linguagem clara, didática e encorajadora, 
+    voltado para pessoas sem conhecimento financeiro. O diagnóstico será exibido diretamente ao usuário no app, 
+    fale sempre em segunda pessoa ("você tem...", "sua meta...").
+
+    Dados da simulação:
+    ${buildSimulationData(simulation)}
 
     Retorne APENAS um JSON válido, sem texto adicional, sem blocos de código, neste formato exato:
 
@@ -63,4 +68,43 @@ export function buildAIPrompt(simulation: SimulationRecord) {
       - "viable": saldo após reserva para a meta é maior ou igual a 0
       - "needs_adjustment": saldo negativo de até 20% do valor da economia mensal necessária
       - "unfeasible": saldo negativo superior a 20% do valor da economia mensal necessária`
+}
+
+const formatList = (items: string[]) =>
+  items.map((item, index) => `${index + 1}. ${item}`).join('\n')
+
+function buildInsightSummary(insight: InsightData) {
+  const { feasibility, diagnosis, suggestions, extraIncome, investment } =
+    insight
+
+  return `Diagnóstico que o usuário já recebeu:
+    Viabilidade da meta (${feasibility.status}): ${feasibility.content}
+    Diagnóstico financeiro: ${diagnosis.content}
+    Sugestões práticas:
+    ${formatList(suggestions.items)}
+    Como aumentar a renda:
+    ${formatList(extraIncome.items)}
+    Sugestões de investimento:
+    ${formatList(investment.items)}
+    Mensagem final: ${insight.motivation.content}`
+}
+
+export function buildChatPrompt(simulation: SimulationRecord) {
+  const { insight } = simulation
+
+  return `Você é um educador financeiro especializado em finanças pessoais, conversando com o usuário dentro do app.
+    Responda às perguntas dele sobre a simulação abaixo, com linguagem clara, didática e encorajadora,
+    voltada para pessoas sem conhecimento financeiro. Fale sempre em segunda pessoa ("você tem...", "sua meta...").
+
+    Dados da simulação:
+    ${buildSimulationData(simulation)}
+    ${insight ? buildInsightSummary(insight) : ''}
+
+    Regras:
+    - Responda em português do Brasil
+    - Seja objetivo: no máximo 3 parágrafos curtos
+    - Use o diagnóstico já recebido como base e não o contradiga; se o usuário citar uma sugestão, explique-a com mais detalhes
+    - Cite valores da simulação quando ajudar na resposta
+    - Nunca use markdown, listas com símbolos ou títulos: apenas texto simples
+    - Responda apenas sobre esta simulação e finanças pessoais; caso a pergunta fuja do tema, explique gentilmente que só pode ajudar com isso`
 }
