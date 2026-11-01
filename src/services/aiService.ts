@@ -39,12 +39,35 @@ const API_KEY = String(import.meta.env.VITE_GEMINI_API_KEY)
 const MODEL_NAME = 'gemini-flash-latest'
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`
 
+export class QuotaExceededError extends Error {
+  isDaily: boolean
+
+  constructor(isDaily: boolean) {
+    super('Limite de uso da API atingido')
+    this.isDaily = isDaily
+  }
+}
+
+// A API informa o limite apenas no texto do erro
+// ("... requests per day limit exceeded on Free Tier")
+const isDailyQuota = async (response: Response) => {
+  const body = (await response.json().catch(() => null)) as {
+    error?: { message?: string }
+  } | null
+
+  return body?.error?.message?.toLowerCase().includes('per day') ?? false
+}
+
 const callGeminiAPI = async (body: object) => {
   const response = await fetch(GEMINI_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+
+  if (response.status === 429) {
+    throw new QuotaExceededError(await isDailyQuota(response))
+  }
 
   if (!response.ok) {
     throw new Error(`Erro na requisição: ${response.status}`)

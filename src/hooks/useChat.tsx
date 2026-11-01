@@ -4,6 +4,7 @@ import { buildChatPrompt } from '@/data/aiPrompt'
 import type { SimulationRecord } from '@/data/simulation'
 import { useSimulationStorage } from '@/hooks/useSimulationStorage'
 import { type ChatMessage, getChatAnswer } from '@/services/aiService'
+import { getAIErrorMessage } from '@/utils/aiError'
 
 const createMessage = (
   role: ChatMessage['role'],
@@ -16,7 +17,6 @@ const createMessage = (
 })
 
 const ANSWER_ERROR = 'Erro ao obter a resposta. Tente novamente.'
-const QUOTA_ERROR = 'Limite de uso da IA atingido. Tente novamente mais tarde.'
 
 export const useChat = (simulationId: string) => {
   const { getFormData, updateSimulation } = useSimulationStorage()
@@ -60,9 +60,7 @@ export const useChat = (simulationId: string) => {
       const answer = await getChatAnswer(buildChatPrompt(simulation), history)
       saveMessages([...history, createMessage('model', answer)])
     } catch (error) {
-      const isQuotaExceeded =
-        error instanceof Error && error.message.includes('429')
-      setError(isQuotaExceeded ? QUOTA_ERROR : ANSWER_ERROR)
+      setError(getAIErrorMessage(error, ANSWER_ERROR))
     } finally {
       setIsLoading(false)
     }
