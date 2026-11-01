@@ -4,6 +4,7 @@ import { buildAIPrompt } from '@/data/aiPrompt'
 import type { SimulationRecord } from '@/data/simulation'
 import { useSimulationStorage } from '@/hooks/useSimulationStorage'
 import { getInsight, type InsightData } from '@/services/aiService'
+import { getAIErrorMessage } from '@/utils/aiError'
 
 export const useInsight = (id: string) => {
   const isRequestPending = useRef(false)
@@ -46,8 +47,13 @@ export const useInsight = (id: string) => {
           ...simulation,
           insight: data,
         } as SimulationRecord)
-      } catch {
-        setError('Erro ao gerar o diagnóstico. Tente novamente.')
+      } catch (error) {
+        setError(
+          getAIErrorMessage(
+            error,
+            'Erro ao gerar o diagnóstico. Tente novamente.',
+          ),
+        )
       } finally {
         isRequestPending.current = false
         setIsLoading(false)
