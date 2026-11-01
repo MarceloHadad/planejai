@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from 'react'
 
+import { FeasibilityBadge } from '@/components/shared/FeasibilityBadge'
 import type { InsightData } from '@/services/aiService'
 
 interface ContentProps {
@@ -32,40 +33,15 @@ function OrderedList({ items }: { items: string[] }) {
   )
 }
 
-const statusStyles = {
-  viable: {
-    label: 'Meta viável no prazo',
-    className:
-      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  },
-  needs_adjustment: {
-    label: 'Ajuste necessário',
-    className:
-      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  },
-  unfeasible: {
-    label: 'Meta inviável no prazo',
-    className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  },
-}
-
 export function Content({ insight }: ContentProps) {
-  const status = statusStyles[insight.feasibility.status] ?? null
-
   return (
-    <div className="lg:scrollbar-thin lg:max-h-93 lg:overflow-y-auto lg:pr-2 lg:[scrollbar-color:var(--border)_transparent]">
+    <div className="lg:max-h-93 lg:scrollbar-thin lg:[scrollbar-color:var(--border)_transparent] lg:overflow-y-auto lg:pr-2">
       <section className="flex flex-col gap-2">
         <div className="flex flex-col items-start gap-2 sm:flex-row">
           <span className="text-foreground text-sm font-semibold">
             🎯 Viabilidade da Meta
           </span>
-          {status && (
-            <span
-              className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${status.className}`}
-            >
-              {status.label}
-            </span>
-          )}
+          <FeasibilityBadge status={insight.feasibility.status} />
         </div>
         <Paragraph>{insight.feasibility.content}</Paragraph>
       </section>
