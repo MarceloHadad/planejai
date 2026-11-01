@@ -5,43 +5,52 @@ import {
 
 const LOCAL_STORAGE_KEY = 'simulation-data'
 
+const readAll = () => {
+  const storage = localStorage.getItem(LOCAL_STORAGE_KEY)
+  return storage ? (JSON.parse(storage) as SimulationRecord[]) : []
+}
+
+const writeAll = (records: SimulationRecord[]) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(records))
+}
+
 export const useSimulationStorage = () => {
   const saveFormData = (formData: SimulationFormData) => {
     const id = crypto.randomUUID()
-    const record: SimulationRecord = { ...formData, id }
+    const record: SimulationRecord = {
+      ...formData,
+      id,
+      createdAt: new Date().toISOString(),
+    }
 
-    const storage = localStorage.getItem(LOCAL_STORAGE_KEY)
-    const savedData = storage ? (JSON.parse(storage) as SimulationRecord[]) : []
-
-    localStorage.setItem(
-      LOCAL_STORAGE_KEY,
-      JSON.stringify([...savedData, record]),
-    )
+    writeAll([...readAll(), record])
 
     return id
   }
 
   const getFormData = (id: string) => {
-    const storage = localStorage.getItem(LOCAL_STORAGE_KEY)
-
-    if (!storage) {
-      return null
-    }
-
-    const savedData = JSON.parse(storage) as SimulationRecord[]
-    return savedData.find((record) => record.id === id) || null
+    return readAll().find((record) => record.id === id) || null
   }
 
-  const updateSimulation = (id: string, data: SimulationRecord) => {
-    const storage = localStorage.getItem(LOCAL_STORAGE_KEY)
-    const savedData = storage ? (JSON.parse(storage) as SimulationRecord[]) : []
+  const getAllSimulations = () => readAll()
 
-    const updated = savedData.map((record) =>
+  const updateSimulation = (id: string, data: SimulationRecord) => {
+    const updated = readAll().map((record) =>
       record.id === id ? { ...data } : record,
     )
 
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated))
+    writeAll(updated)
   }
 
-  return { saveFormData, getFormData, updateSimulation }
+  const deleteSimulation = (id: string) => {
+    writeAll(readAll().filter((record) => record.id !== id))
+  }
+
+  return {
+    saveFormData,
+    getFormData,
+    getAllSimulations,
+    updateSimulation,
+    deleteSimulation,
+  }
 }
