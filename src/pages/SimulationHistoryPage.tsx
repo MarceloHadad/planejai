@@ -88,7 +88,7 @@ export function SimulationHistoryPage() {
             <div className="flex-1">
               <Input
                 type="search"
-                autoFocus={false}
+                autoFocus={true}
                 aria-label="Buscar simulação pelo nome da meta"
                 placeholder="Buscar pelo nome da meta"
                 value={search}
