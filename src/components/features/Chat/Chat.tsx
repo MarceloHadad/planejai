@@ -28,7 +28,7 @@ export function Chat({ simulationId }: ChatProps) {
         💬 Converse com o Educador Financeiro
       </h3>
 
-      <div className="mb-4 flex max-h-72 flex-col gap-3 overflow-y-auto pr-2">
+      <div className="mb-4 flex max-h-72 scrollbar-thin [scrollbar-color:var(--border)_transparent] flex-col gap-3 overflow-y-auto pr-2 lg:max-h-90">
         {messages.length === 0 && (
           <p className="text-muted-foreground text-sm">
             Tem alguma dúvida sobre sua simulação? Pergunte abaixo.
