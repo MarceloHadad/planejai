@@ -1,3 +1,4 @@
+import type { InsightData } from '@/services/aiService'
 import { parseCurrency } from '@/utils/currency'
 import { calcMonthlySavings } from '@/utils/simulation'
 
@@ -69,6 +70,25 @@ export function buildAIPrompt(simulation: SimulationRecord) {
       - "unfeasible": saldo negativo superior a 20% do valor da economia mensal necessária`
 }
 
+const formatList = (items: string[]) =>
+  items.map((item, index) => `${index + 1}. ${item}`).join('\n')
+
+function buildInsightSummary(insight: InsightData) {
+  const { feasibility, diagnosis, suggestions, extraIncome, investment } =
+    insight
+
+  return `Diagnóstico que o usuário já recebeu:
+    Viabilidade da meta (${feasibility.status}): ${feasibility.content}
+    Diagnóstico financeiro: ${diagnosis.content}
+    Sugestões práticas:
+    ${formatList(suggestions.items)}
+    Como aumentar a renda:
+    ${formatList(extraIncome.items)}
+    Sugestões de investimento:
+    ${formatList(investment.items)}
+    Mensagem final: ${insight.motivation.content}`
+}
+
 export function buildChatPrompt(simulation: SimulationRecord) {
   const { insight } = simulation
 
@@ -78,11 +98,12 @@ export function buildChatPrompt(simulation: SimulationRecord) {
 
     Dados da simulação:
     ${buildSimulationData(simulation)}
-    ${insight ? `- Viabilidade da meta (já informada ao usuário): ${insight.feasibility.status} — ${insight.feasibility.content}` : ''}
+    ${insight ? buildInsightSummary(insight) : ''}
 
     Regras:
     - Responda em português do Brasil
     - Seja objetivo: no máximo 3 parágrafos curtos
+    - Use o diagnóstico já recebido como base e não o contradiga; se o usuário citar uma sugestão, explique-a com mais detalhes
     - Cite valores da simulação quando ajudar na resposta
     - Nunca use markdown, listas com símbolos ou títulos: apenas texto simples
     - Responda apenas sobre esta simulação e finanças pessoais; caso a pergunta fuja do tema, explique gentilmente que só pode ajudar com isso`
