@@ -21,3 +21,43 @@
 .lucide {
   stroke-width: 1.5;
 }
+
+/* Select customizável (Chrome): lista com as cores do tema.
+   Em navegadores sem suporte, usa o select nativo. */
+@supports (appearance: base-select) {
+  .themed-select,
+  .themed-select::picker(select) {
+    appearance: base-select;
+  }
+
+  .themed-select::picker-icon {
+    display: none;
+  }
+
+  .themed-select::picker(select) {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .themed-select option {
+    border-radius: 0.75rem;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .themed-select option:hover,
+  .themed-select option:focus-visible {
+    background: var(--muted-primary);
+  }
+
+  .themed-select option:checked {
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .themed-select option::checkmark {
+    display: none;
+  }
+}
